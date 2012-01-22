@@ -1,0 +1,29 @@
+= IMAPCrypt
+
+IMAPCrypt uses  Gnu Privacy Guard (GPG) to PGP-encrypt emails in an IMAP folder.  IMAP is a protocol
+used to access email stored on a remote server (as opposed to POP3 that retrieves the email to store
+locally).  PGP is an encryption standard that uses public-private key pairs to encrypt a symmetric 
+key that is used to encrypt the body of an email.  The public key is used to encrypt and the private
+key is used to decrypt the email.  Make sure that you have the proper private key for the public key
+that you specify to encrypt emails to ("the recipient"), or you will never read those emails again.
+
+= API
+
+See the Javadocs in docs/javadocs
+
+= How to use the tool
+
+See the user's guide in docs/userguide
+
+== Contributing to IMAPCrypt
+ 
+* Check out the latest master to make sure the feature hasn't been implemented or the bug hasn't been fixed yet
+* Check out the issue tracker to make sure someone already hasn't requested it and/or contributed it
+* Fork the project
+* Start a feature/bugfix branch
+* Commit and push until you are happy with your contribution
+* Make sure to add tests for it. This is important so I don't break it in a future version unintentionally.
+
+== Copyright
+
+Copyright (c) 2012 Chris Lee. See LICENSE.txt for further details.
