@@ -13,6 +13,11 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+/**
+ * This class holds the graphical interfacing to allow
+ * the user to specify the location of GPG on their system.
+ *
+ */
 public class GPGGroup {
 
 	/** this variable is the super object, if it is needed */
@@ -29,17 +34,21 @@ public class GPGGroup {
 	 * This constructor holds all of the needed variables for the group. Composite is
 	 * the super object that holds this group. Display and Shell are for actions
 	 * that this group takes.
-	 * @param comp
-	 * @param options
-	 * @param display
-	 * @param shell
+	 * @param comp the parent that will host this object
+	 * @param display the display needed for configuration options
+	 * @param shell the shell needed to open windows
 	 */
-	public GPGGroup( Composite comp, int options, Display display, Shell shell ) {
+	public GPGGroup( Composite comp, Display display, Shell shell ) {
 		composite = comp;
 		this.shell = shell;
 		this.display = display;
 	}
 	
+	/**
+	 * Function that instructs the GPGGroup to actually add its
+	 * contents to the GUI. This allows the construction of the object
+	 * to occur at a different time from the addition to the GUI.
+	 */
 	public void addToGUI() {
 		composite.setLayout( new GridLayout( 2, false ) );
 
@@ -52,6 +61,10 @@ public class GPGGroup {
 		composite.pack();
 	}
 
+	/**
+	 * Private function that is responsible for adding the components
+	 * to the composite from the constructor.
+	 */
 	private void createItems() {
 
 		/* first object in the column */
@@ -86,6 +99,10 @@ public class GPGGroup {
 		open.addSelectionListener( openListener );
 	}
 
+	/**
+	 * Private function that will attempt to automatically locate GPG on the system.
+	 * If it fails, it will notify the user to find it manually.
+	 */
 	private void findGPG() {
 		String gpgLoc = new IMAPCrypt(null, null, null).getGPGPath();
 		if( gpgLoc == null ) {
@@ -97,6 +114,11 @@ public class GPGGroup {
 		open.setEnabled(true);
 	}
 	
+	/**
+	 * Retrieve the values that the user has entered into the
+	 * controls within the GPGGroup.
+	 * @return
+	 */
 	public Map<String, String> getGroupValues() {
 		Map<String, String> valueMap = new HashMap<String, String>();
 		valueMap.put( "gpgLocation", gpgLocation.getText() );

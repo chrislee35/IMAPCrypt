@@ -26,15 +26,24 @@ public class ServerGroup {
 
 	private Text serverText;
 	private Text userText;
-	private Text folderText;
 	private PasswordGroup passwordComposite;
 	private FolderGroup linkToFolderComposite;
 
-	public ServerGroup( Composite comp, int options, Shell shell ) {
+	/**
+	 * Only constructor for this object
+	 * @param comp the parent composite to hold this object
+	 * @param shell used for the PasswordComposite to be able to generate FileDialogs
+	 */
+	public ServerGroup( Composite comp, Shell shell ) {
 		composite = comp;
 		this.shell = shell;
 	}
 	
+	/**
+	 * Function that instructs the ServerGroup to actually add its
+	 * contents to the GUI. This allows the construction of the object
+	 * to occur at a different time from the addition to the GUI.
+	 */
 	public void addToGUI() {
 		composite.setLayout( new GridLayout( 2, true ) );
 
@@ -44,6 +53,10 @@ public class ServerGroup {
 		composite.pack();		
 	}
 
+	/**
+	 * Private function that is responsible for adding the components
+	 * to the composite from the constructor.
+	 */
 	private void createItems() {
 
 		Label serverLabel = new Label( composite, SWT.NONE );
@@ -80,7 +93,7 @@ public class ServerGroup {
 		passGroupGD.horizontalAlignment = GridData.FILL;
 		passGroupGD.grabExcessHorizontalSpace = true;
 		passwordGroup.setLayoutData(passGroupGD);
-		passwordComposite = new PasswordGroup( passwordGroup, SWT.NONE, shell );
+		passwordComposite = new PasswordGroup( passwordGroup, shell );
 		passwordComposite.addToGUI();
 		
 		Label blank = new Label(composite, SWT.NONE);
@@ -112,10 +125,21 @@ public class ServerGroup {
 		});
 	}
 	
+	/**
+	 * This sets the value of the FolderComposite in order for the ServerGroup
+	 * to populate the list of folders when the connect button is hit. This
+	 * function must be called before addToGUI() function is called.
+	 * @param folderComposite
+	 */
 	public void setFolderComposite(FolderGroup folderComposite) {
 		this.linkToFolderComposite = folderComposite;
 	}
 
+	/**
+	 * Retrieve the values that the user has entered into the
+	 * controls within the ServerGroup.
+	 * @return
+	 */
 	public Map<String, String> getGroupValues() {
 		Map<String, String> valueMap = new HashMap<String, String>();
 

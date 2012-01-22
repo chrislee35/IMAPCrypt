@@ -13,6 +13,12 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+/**
+ * This class holds the graphical interfacing to allow
+ * the user to specify a password for the server directly or
+ * have the password be contained within a password file.
+ *
+ */
 public class PasswordGroup {
 
 	/** this variable is the super object, if it is needed */
@@ -24,11 +30,21 @@ public class PasswordGroup {
 	private Text password;
 	private Text passwordFile;
 
-	public PasswordGroup( Composite comp, int options, Shell shell ) {
+	/**
+	 * Only constructor for this object
+	 * @param comp the parent composite to hold this object
+	 * @param shell used to create a FileDialog for the user to specify a password file
+	 */
+	public PasswordGroup( Composite comp, Shell shell ) {
 		composite = comp;
 		this.shell = shell;
 	}
 	
+	/**
+	 * Function that instructs the PasswordGroup to actually add its
+	 * contents to the GUI. This allows the construction of the object
+	 * to occur at a different time from the addition to the GUI.
+	 */
 	public void addToGUI() {
 		composite.setLayout( new GridLayout( 3, false ) );
 
@@ -38,6 +54,10 @@ public class PasswordGroup {
 		composite.pack();		
 	}
 
+	/**
+	 * Private function that is responsible for adding the components
+	 * to the composite from the constructor.
+	 */
 	private void createItems() {
 
 		final Button passwordButton = new Button( composite, SWT.RADIO );
@@ -93,6 +113,11 @@ public class PasswordGroup {
 		} );
 	}
 
+	/**
+	 * Retrieve the values that the user has entered into the
+	 * controls within the PasswordGroup.
+	 * @return
+	 */
 	public Map<String, String> getGroupValues() {
 		Map<String, String> valueMap = new HashMap<String, String>();
 		valueMap.put(KeyConstants.USEPASSFILE, String.valueOf(usePassFile));

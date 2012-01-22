@@ -7,6 +7,12 @@ import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+/**
+ * This is a generic open listener that is used to open a FileDialog
+ * when a button is pressed to have a user locate a file on the
+ * hard drive.
+ *
+ */
 public class OpenListener implements SelectionListener {
 
 	/** this is the shell object used to create the open dialog */

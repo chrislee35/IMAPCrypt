@@ -14,6 +14,12 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Listener;
 
+/**
+ * This class holds the graphical interfacing for the other
+ * filters that the user can apply to the message that
+ * will be encrypted.
+ *
+ */
 public class FilterGroup {
 
 
@@ -21,14 +27,30 @@ public class FilterGroup {
 	private final Composite composite;
 	private final Display display;
 	
+	/**
+	 * Right now, a button should be placed to apply a different
+	 * filter. When we run out of room for buttons, we'll change
+	 * this
+	 */
 	private Button senderFilter;
 	private Button subjectFilter;
 	
+	/*
+	 * A set should be added for each type of filter
+	 */
 	private final Set<String> senderSet;
 	private final Set<String> subjectSet;
 	
+	/*
+	 * This set simply holds the name of the filter that should be inverted
+	 */
 	private final Set<String> invertFilter;
 	
+	/**
+	 * Only constructor for this object
+	 * @param comp the parent composite to hold this object
+	 * @param display the display used for the windows this object can create
+	 */
 	public FilterGroup( Composite comp, Display display ) {
 		composite = comp;
 		this.display = display;
@@ -38,7 +60,9 @@ public class FilterGroup {
 	}
 
 	/**
-	 * Actually push the items out to the composite for display
+	 * Function that instructs the FilterGroup to actually add its
+	 * contents to the GUI. This allows the construction of the object
+	 * to occur at a different time from the addition to the GUI.
 	 */
 	public void addToGUI() {
 		composite.setLayout( new RowLayout() );
@@ -50,7 +74,8 @@ public class FilterGroup {
 	}
 	
 	/**
-	 * Create the items within the GUI
+	 * Private function that is responsible for adding the components
+	 * to the composite from the constructor.
 	 */
 	private void createItems() {
 		
@@ -99,7 +124,8 @@ public class FilterGroup {
 	}
 	
 	/**
-	 * Get the sets that are stored within this object
+	 * Retrieve the values that the user has entered into the
+	 * controls within the FilterGroup.
 	 * @return
 	 */
 	public Map<String, Set<String>> getFilters() {

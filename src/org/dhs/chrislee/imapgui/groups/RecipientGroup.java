@@ -8,6 +8,12 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Text;
 
+/**
+ * This class holds the graphical interfacing to allow
+ * the user to specify the recipients that should be
+ * encrypted.
+ *
+ */
 public class RecipientGroup {
 
 	/** this variable is the super object, if it is needed */
@@ -15,10 +21,19 @@ public class RecipientGroup {
 	
 	private Text recipientList;
 	
-	public RecipientGroup( Composite comp, int options ) {
+	/**
+	 * Only constructor for this object
+	 * @param comp the parent composite to hold this object
+	 */
+	public RecipientGroup( Composite comp ) {
 		composite = comp;
 	}
 	
+	/**
+	 * Function that instructs the RecipientGroup to actually add its
+	 * contents to the GUI. This allows the construction of the object
+	 * to occur at a different time from the addition to the GUI.
+	 */
 	public void addToGUI() {
 		composite.setLayout( new FillLayout() );
 
@@ -28,6 +43,10 @@ public class RecipientGroup {
 		composite.pack();		
 	}
 	
+	/**
+	 * Private function that is responsible for adding the components
+	 * to the composite from the constructor.
+	 */
 	private void createItems() {
 		
 		recipientList = new Text(composite, SWT.MULTI | SWT.BORDER | SWT.V_SCROLL);
@@ -36,6 +55,11 @@ public class RecipientGroup {
 		
 	}
 	
+	/**
+	 * Retrieve the values that the user has entered into the
+	 * controls within the RecipientGroup.
+	 * @return
+	 */
 	public Map<String, String> getGroupValues() {
 		Map<String, String> valueMap = new HashMap<String, String>();
 		

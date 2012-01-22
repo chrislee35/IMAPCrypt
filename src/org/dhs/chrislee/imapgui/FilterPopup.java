@@ -18,6 +18,11 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
+/**
+ * This is a popup window that allows a user to add filters to a list. It can
+ * be used in standalone mode, but it is designed to be used entirely within the IMAPGui.
+ *
+ */
 public class FilterPopup {
 
 	private final String filterType;
@@ -31,6 +36,10 @@ public class FilterPopup {
 	private final Set<String> filters;
 	private boolean invertSave = false;
 	
+	/**
+	 * Create a FilterPopup in standalone mode.
+	 * @param filterType this String defines what type of filters can be entered
+	 */
 	public FilterPopup(String filterType) {
 		this.filterType = filterType;
 		this.display = new Display();
@@ -38,6 +47,11 @@ public class FilterPopup {
 		this.filters = new HashSet<String>();
 	}
 	
+	/**
+	 * Create a FilterPopup in slave mode to the IMAPGui
+	 * @param filterType this String defines what type of filters can be entered
+	 * @param display this is the master display of the application
+	 */
 	public FilterPopup(String filterType, Display display) {
 		this.filterType = filterType;
 		this.display = display;
@@ -45,6 +59,9 @@ public class FilterPopup {
 		this.filters = new HashSet<String>();
 	}
 	
+	/**
+	 * This function creates the popup and sets all of the interfacing
+	 */
 	public void open() {
 		
 		/* calculate the size of the shell */
@@ -66,6 +83,11 @@ public class FilterPopup {
 			display.dispose();
 	}
 	
+	/**
+	 * Add all content to the GUI and ready the popup for display
+	 * @param display this is the display to create the shell upon
+	 * @param shell this shell is local to the FilterPopup
+	 */
 	private void createContents(Display display, final Shell shell) {
 		
 		shell.setLayout(new GridLayout(3, false));
@@ -195,18 +217,38 @@ public class FilterPopup {
 		});
 	}
 	
+	/**
+	 * If FilterPopup is used in slave mode, this function allows the IMAPGui to
+	 * prepopulate the filter list with already entered filters. It should be called
+	 * before the open() function.
+	 * @param filters
+	 */
 	public void loadFilters(Set<String> filters) {
 		this.filters.addAll(filters);
 	}
 	
+	/**
+	 * This allows the IMAPGui to retrieve the filters from the popup after it has closed
+	 * @return
+	 */
 	public Set<String> getFilters() {
 		return filters;
 	}
 	
+	/**
+	 * This allows the IMAPGui to retrieve the status of the inversion flag after the popup
+	 * has closed.
+	 * @return if true, then the filtering should be inverted. This means to encrypt everything except the provided filters
+	 */
 	public boolean getInvert() {
 		return invertSave;
 	}
 	
+	/**
+	 * This is a testing main function that was used in development. It is not expected to
+	 * be used at any time during IMAPGui operation.
+	 * @param args
+	 */
 	public static void main( String[] args ) {
 		new FilterPopup("Standalone Test").open();
 	}

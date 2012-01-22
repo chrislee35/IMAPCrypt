@@ -10,6 +10,11 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
+/**
+ * This class holds the graphical interfacing for the Date
+ * filter that allows users to specify which email messages
+ * should be encrypted based upon their age.
+ */
 public class DateGroup {
 
 	/** this variable is the super object, if it is needed */
@@ -20,10 +25,19 @@ public class DateGroup {
 	private Text daysAgoText;
 	private Text daysUntilText;
 	
-	public DateGroup( Composite comp, int options ) {
+	/**
+	 * Only constructor for this object
+	 * @param comp this is the composite the DateGroup will be added to
+	 */
+	public DateGroup( Composite comp) {
 		composite = comp;
 	}
 
+	/**
+	 * Function that instructs the DateGroup to actually add its
+	 * contents to the GUI. This allows the construction of the object
+	 * to occur at a different time from the addition to the GUI.
+	 */
 	public void addToGUI() {
 		composite.setLayout( new GridLayout( 3, false ) );
 
@@ -33,6 +47,10 @@ public class DateGroup {
 		composite.pack();		
 	}
 	
+	/**
+	 * Private function that is responsible for adding the components
+	 * to the composite from the constructor.
+	 */
 	private void createItems() {
 		
 		daysAgo = new Button(composite, SWT.CHECK);
@@ -57,6 +75,11 @@ public class DateGroup {
 		
 	}
 
+	/**
+	 * Retrieve the values that the user has entered into the
+	 * controls within the DateGroup.
+	 * @return
+	 */
 	public Map<String, String> getGroupValues() {
 		Map<String, String> valueMap = new HashMap<String, String>();
 		

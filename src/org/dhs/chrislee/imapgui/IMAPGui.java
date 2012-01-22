@@ -32,6 +32,12 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 
+/**
+ * This is the main GUI class for IMAPCrypt. This GUI directly interfaces with the
+ * IMAPCrypt backend. All information that can be placed into the command line
+ * version of IMAPCrypt can be entered into this GUI.
+ *
+ */
 public class IMAPGui {
 
 	private Display display;
@@ -92,15 +98,15 @@ public class IMAPGui {
 		 */
 		Group gpgGroup = new Group( shell, SWT.NONE );
 		gpgGroup.setText( "GnuPG Location" );
-		gpgComposite = new GPGGroup( gpgGroup, SWT.NONE, display, shell );
+		gpgComposite = new GPGGroup( gpgGroup, display, shell );
 
 		Group serverGroup = new Group( shell, SWT.NONE );
 		serverGroup.setText( "Server Information" );
-		serverComposite = new ServerGroup( serverGroup, SWT.NONE, shell );
+		serverComposite = new ServerGroup( serverGroup, shell );
 
 		Group folderGroup = new Group( shell, SWT.NONE );
 		folderGroup.setText("Folder To Encrypt");
-		folderComposite = new FolderGroup( folderGroup, SWT.NONE);
+		folderComposite = new FolderGroup( folderGroup);
 		/* set the folder composites */
 		serverComposite.setFolderComposite(folderComposite);
 
@@ -112,7 +118,7 @@ public class IMAPGui {
 		dateTab.setText("Date Filter");	
 		Composite dateComp = new Composite(callbackTabs, SWT.NONE);
 		dateComp.setLayout(new FillLayout());
-		dateComposite = new DateGroup( dateComp, SWT.NONE );
+		dateComposite = new DateGroup( dateComp );
 		dateTab.setControl(dateComp);
 		TabItem filterTab = new TabItem(callbackTabs, SWT.NONE);
 		filterTab.setText("Other Filters");
@@ -123,7 +129,7 @@ public class IMAPGui {
 		
 		Group recipGroup = new Group( dateRecipGroup, SWT.NONE );
 		recipGroup.setText( "Encrypt the following KeyIDs" );
-		recipComposite = new RecipientGroup( recipGroup, SWT.NONE );
+		recipComposite = new RecipientGroup( recipGroup );
 		
 		/* add the composites to the GUI */
 		gpgComposite.addToGUI();
@@ -180,6 +186,12 @@ public class IMAPGui {
 		shell.pack();
 	}
 	
+	/**
+	 * Private function to display a warning for the program before the main
+	 * graphical interface appears. The user must take an action on this box in order
+	 * to use the program.
+	 * @return
+	 */
 	private boolean createWarningBox() {
 		
 		final String message = "We are furnishing this item \"as is\"." +
@@ -220,7 +232,8 @@ public class IMAPGui {
 
 	/**
 	 * Get the data from the Maps that hold the values from
-	 * the composites.
+	 * the composites. If debug mode is on, the key values are dropped to
+	 * the command line and the program exits.
 	 */
 	private void grabData() {
 		Map<String, String> valueMap = new HashMap<String, String>();
@@ -244,7 +257,7 @@ public class IMAPGui {
 					System.out.println("Value: " + s);
 			}
 			
-			System.exit(0);
+			return;
 		}
 		
 		/* get the password */
@@ -325,6 +338,10 @@ public class IMAPGui {
 		mb.open();
 	}
 	
+	/**
+	 * This function can be used to activate debug mode for the GUI. Debug mode will
+	 * simply dump everything to the command line but not execute any IMAPCrypt actions.
+	 */
 	public void setDebugOn() {
 		this.debug = true;
 	}
