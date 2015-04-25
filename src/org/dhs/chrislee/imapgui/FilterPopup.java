@@ -1,220 +1,170 @@
 package org.dhs.chrislee.imapgui;
 
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.List;
-import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Text;
+import javax.swing.DefaultListModel;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JDialog;
+import javax.swing.JList;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 /**
  * This is a popup window that allows a user to add filters to a list. It can
  * be used in standalone mode, but it is designed to be used entirely within the IMAPGui.
  *
  */
-public class FilterPopup {
+public class FilterPopup extends JDialog {
 
-	private final String filterType;
-	private final Display display;
-	private final boolean standAlone;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -4485441347057989882L;
 	
-	private Shell shell;
-	private List filterList;
-	private Text newFilter;
-	private Button invert;
-	private final Set<String> filters;
+	private JDialog fp;
+	private JList<String> filterList;
+	private JTextField newFilter;
+	private JCheckBox invertToggleButton;
+	private Set<String> filters;
+	private DefaultListModel<String> model;
 	private boolean invertSave = false;
 	
 	/**
 	 * Create a FilterPopup in standalone mode.
 	 * @param filterType this String defines what type of filters can be entered
 	 */
-	public FilterPopup(String filterType) {
-		this.filterType = filterType;
-		this.display = new Display();
-		this.standAlone = true;
-		this.filters = new HashSet<String>();
-	}
-	
-	/**
-	 * Create a FilterPopup in slave mode to the IMAPGui
-	 * @param filterType this String defines what type of filters can be entered
-	 * @param display this is the master display of the application
-	 */
-	public FilterPopup(String filterType, Display display) {
-		this.filterType = filterType;
-		this.display = display;
-		this.standAlone = false;
-		this.filters = new HashSet<String>();
-	}
-	
-	/**
-	 * This function creates the popup and sets all of the interfacing
-	 */
-	public void open() {
+	public FilterPopup(Set<String> filters) {
+		super();
+		fp = this;
+		this.filters = filters;
+		model = new DefaultListModel<String>();
+		for(String filter: filters)
+			model.addElement(filter);
 		
-		/* calculate the size of the shell */
-		Rectangle displaySize = display.getClientArea();
-		int horizSize = displaySize.width / 3;
-		int vertSize = displaySize.height / 3;
-		
-		shell = new Shell(display, SWT.CLOSE);
-		shell.setText( filterType + " Filter Editor" );
-		shell.setSize(horizSize, vertSize);
-		createContents( display, shell );
-		shell.open();
-		while( !shell.isDisposed() ) {
-			if( !display.readAndDispatch() ) {
-				display.sleep();
-			}
-		}
-		if( standAlone )
-			display.dispose();
-	}
-	
-	/**
-	 * Add all content to the GUI and ready the popup for display
-	 * @param display this is the display to create the shell upon
-	 * @param shell this shell is local to the FilterPopup
-	 */
-	private void createContents(Display display, final Shell shell) {
-		
-		shell.setLayout(new GridLayout(3, false));
 		
 		/* create the list */
-		filterList = new List(shell, SWT.MULTI | SWT.BORDER | SWT.V_SCROLL);
-		GridData listGD = new GridData();
-		listGD.horizontalSpan = 2;
-		listGD.verticalSpan = 3;
-		listGD.grabExcessHorizontalSpace = true;
-		listGD.grabExcessVerticalSpace = true;
-		listGD.horizontalAlignment = GridData.FILL;
-		listGD.verticalAlignment = GridData.FILL;
-		filterList.setLayoutData(listGD);
-		filterList.addSelectionListener(new SelectionListener() {
+		
+		filterList = new JList<String>(model);
+		filterList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		filterList.setSize(200, 300);
+		filterList.setMinimumSize(new Dimension(200, 300));
+		filterList.addListSelectionListener(new ListSelectionListener() {
 			@Override
-			public void widgetSelected( SelectionEvent e ) {
-				int index = filterList.getSelectionIndex();
+			public void valueChanged(ListSelectionEvent e) {
+				int index = filterList.getSelectedIndex();
 				if( index > -1 )
-					newFilter.setText(filterList.getItem(index));
-			}
-
-			@Override
-			public void widgetDefaultSelected( SelectionEvent e ) {
-				// TODO Auto-generated method stub
+					newFilter.setText((String)filterList.getSelectedValue());
 				
 			}
 		});
-		/* add the filters */
-		for( String s : filters ) {
-			filterList.add(s);
-		}
-		filters.clear();
-		
-		/* right cells, make the items */
-		GridData listButtonGD = new GridData();
-		listButtonGD.horizontalAlignment = GridData.FILL;
-		listButtonGD.verticalAlignment = GridData.FILL;
-		
-		Button remove = new Button(shell, SWT.PUSH);
-		remove.setText("Remove");
-		remove.setToolTipText("Remove the selected filter from the list." +
+				
+		JButton removeButton = new JButton();
+		removeButton.setText("Remove");
+		removeButton.setToolTipText("Remove the selected filter from the list." +
 				"\nMultiple filters can be selected");
-		remove.setLayoutData(listButtonGD);
-		remove.addListener(SWT.Selection, new Listener() {
+		removeButton.addActionListener(new ActionListener() {
 			@Override
-			public void handleEvent( Event event ) {
-				int[] indexes = filterList.getSelectionIndices();
-				if( indexes.length > 0 ) {
-					filterList.remove(indexes);
-				}
+			public void actionPerformed(ActionEvent e) {
+				int[] indexes = filterList.getSelectedIndices();
+				for(int index : indexes)
+					model.remove(index);
 			}
 		});
-		Button selectAll = new Button(shell, SWT.PUSH);
-		selectAll.setText("Select All");
-		selectAll.setToolTipText("Select all filters in the list");
-		selectAll.setLayoutData(listButtonGD);
-		selectAll.addListener(SWT.Selection, new Listener() {
+		JButton selectAllButton = new JButton();
+		selectAllButton.setText("Select All");
+		selectAllButton.setToolTipText("Select all filters in the list");
+		selectAllButton.addActionListener(new ActionListener() {
 			@Override
-			public void handleEvent( Event event ) {
-				filterList.selectAll();
+			public void actionPerformed(ActionEvent e) {
+				filterList.setSelectionInterval(0, model.getSize());
 			}
 		});
-		Label blank1 = new Label(shell, SWT.NONE);
 
 		/* middle row */
-		newFilter = new Text(shell, SWT.SINGLE | SWT.BORDER);
-		GridData newFilterGD = new GridData();
-		newFilterGD.horizontalSpan = 2;
-		newFilterGD.horizontalAlignment = GridData.FILL;
-		newFilterGD.verticalAlignment = GridData.FILL;
-		newFilterGD.grabExcessHorizontalSpace = true;
-		newFilter.setLayoutData(newFilterGD);
-		Button add = new Button(shell, SWT.PUSH);
-		add.setText(" Add ");
-		add.setToolTipText("Add the preceding text as a filter");
-		GridData addGD = new GridData();
-		addGD.horizontalAlignment = GridData.FILL;
-		addGD.verticalAlignment = GridData.FILL;
-		add.setLayoutData(addGD);
-		add.addListener(SWT.Selection, new Listener() {
+		newFilter = new JTextField();
+		JButton addButton = new JButton();
+		addButton.setText(" Add ");
+		addButton.setToolTipText("Add the preceding text as a filter");
+		addButton.addActionListener(new ActionListener() {
 			@Override
-			public void handleEvent( Event event ) {
+			public void actionPerformed( ActionEvent e ) {
 				String addFilter = newFilter.getText();
 				if( !addFilter.equals("") ) {
-					filterList.add(addFilter);
+					model.addElement(addFilter);
 					newFilter.setText("");
 				}
 			}
 		});
 		
 		/* bottom row */
-		invert = new Button(shell, SWT.CHECK);
-		invert.setText("Encrypt all but these");
-		GridData bGD = new GridData();
-		bGD.grabExcessHorizontalSpace = true;
-		bGD.horizontalAlignment = GridData.BEGINNING;
-		invert.setLayoutData(bGD);
+		invertToggleButton = new JCheckBox();
+		invertToggleButton.setText("Encrypt all but these");
 		
-		Button ok = new Button(shell, SWT.NONE);
-		ok.setText(" Save ");
-		ok.setToolTipText("Save changes to the filters");
-		ok.setLayoutData(listButtonGD);
-		ok.addListener(SWT.Selection, new Listener() {
+		JButton okButton = new JButton();
+		okButton.setText(" Save ");
+		okButton.setToolTipText("Save changes to the filters");
+		okButton.addActionListener(new ActionListener() {
 			@Override
-			public void handleEvent( Event event ) {
-				
+			public void actionPerformed( ActionEvent e ) {
+				filters.clear();
 				/* save the filters to the set */
-				String[] allFilters = filterList.getItems();
-				for( String s : allFilters )
-					filters.add(s);
+				Enumeration<String> en = model.elements();
+				while(en.hasMoreElements())
+					filters.add(en.nextElement());
 				
-				invertSave = invert.getSelection();
-						
-				shell.dispose();
+				invertSave = invertToggleButton.isSelected();
+				fp.dispose();
 			}
 		});
-		Button cancel = new Button(shell, SWT.NONE);
-		cancel.setText("Cancel");
-		cancel.setToolTipText("Close and do not save changes to the filters");
-		cancel.setLayoutData(listButtonGD);
-		cancel.addListener(SWT.Selection, new Listener() {
+		JButton cancelButton = new JButton();
+		cancelButton.setText("Cancel");
+		cancelButton.setToolTipText("Close and do not save changes to the filters");
+		cancelButton.addActionListener(new ActionListener() {
 			@Override
-			public void handleEvent( Event event ) {
-				shell.dispose();
-			}		
+			public void actionPerformed(ActionEvent e) {
+				fp.dispose();
+			}
 		});
+		JScrollPane sp = new JScrollPane(filterList);
+		sp.setSize(200, 300);
+		sp.setMinimumSize(filterList.getMinimumSize());
+		
+		setLayout(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 0;
+		c.gridheight = 7;
+		add(sp, c);
+		c.gridheight = 1;
+		c.gridx++;
+		add(addButton, c);
+		c.gridy++;
+		add(removeButton, c);
+		c.gridy++;
+		add(selectAllButton, c);
+		c.gridy++;
+		add(invertToggleButton, c);
+		c.gridy++;
+		add(okButton, c);
+		c.gridy++;
+		add(cancelButton, c);
+		c.gridy = 7;
+		c.gridx = 0;
+		add(newFilter, c);
+		pack();
 	}
 	
 	/**
@@ -224,7 +174,10 @@ public class FilterPopup {
 	 * @param filters
 	 */
 	public void loadFilters(Set<String> filters) {
-		this.filters.addAll(filters);
+		/* add the filters */
+		model.clear();
+		for( String filter : filters )
+			model.addElement(filter);
 	}
 	
 	/**
@@ -250,6 +203,10 @@ public class FilterPopup {
 	 * @param args
 	 */
 	public static void main( String[] args ) {
-		new FilterPopup("Standalone Test").open();
+		HashSet<String> testSet = new HashSet<String>();
+		testSet.add("test");
+		testSet.add("test2");
+		FilterPopup fp = new FilterPopup(testSet);
+		fp.setVisible(true);
 	}
 }

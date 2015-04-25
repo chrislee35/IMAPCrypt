@@ -1,18 +1,16 @@
 package org.dhs.chrislee.imapgui.groups;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.JButton;
+import javax.swing.JPanel;
+
 import org.dhs.chrislee.imapgui.FilterPopup;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.layout.RowLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
 
 /**
  * This class holds the graphical interfacing for the other
@@ -20,20 +18,19 @@ import org.eclipse.swt.widgets.Listener;
  * will be encrypted.
  *
  */
-public class FilterGroup {
+public class FilterPanel extends JPanel {
 
-
-	/** this variable is the super object, if it is needed */
-	private final Composite composite;
-	private final Display display;
-	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1112956529739439555L;
 	/**
 	 * Right now, a button should be placed to apply a different
 	 * filter. When we run out of room for buttons, we'll change
 	 * this
 	 */
-	private Button senderFilter;
-	private Button subjectFilter;
+	private JButton senderFilter;
+	private JButton subjectFilter;
 	
 	/*
 	 * A set should be added for each type of filter
@@ -51,53 +48,34 @@ public class FilterGroup {
 	 * @param comp the parent composite to hold this object
 	 * @param display the display used for the windows this object can create
 	 */
-	public FilterGroup( Composite comp, Display display ) {
-		composite = comp;
-		this.display = display;
+	public FilterPanel() {
 		senderSet = new HashSet<String>();
 		subjectSet = new HashSet<String>();
 		invertFilter = new HashSet<String>();
-	}
-
-	/**
-	 * Function that instructs the FilterGroup to actually add its
-	 * contents to the GUI. This allows the construction of the object
-	 * to occur at a different time from the addition to the GUI.
-	 */
-	public void addToGUI() {
-		composite.setLayout( new RowLayout() );
-
-		/* add items */
-		createItems();
-
-		composite.pack();		
-	}
-	
-	/**
-	 * Private function that is responsible for adding the components
-	 * to the composite from the constructor.
-	 */
-	private void createItems() {
-		
-		senderFilter = new Button(composite, SWT.PUSH);
-		senderFilter.setText("Specify Senders...");
+		senderFilter = new JButton();
+		senderFilter.setText("Filter by Senders...");
 		senderFilter.setToolTipText("Encrypt messages from the these senders");
-		senderFilter.addListener(SWT.Selection, new Listener() {
+		senderFilter.addActionListener(new ActionListener() {
 			@Override
-			public void handleEvent( Event event ) {
+			public void actionPerformed(ActionEvent arg0) {
 				openPopup(KeyConstants.SENDERS, senderSet);
+				
 			}
+			
 		});
-		
-		subjectFilter = new Button(composite, SWT.PUSH);
-		subjectFilter.setText("Specify Subjects...");
+
+		subjectFilter = new JButton();
+		subjectFilter.setText("Filter by Subjects...");
 		subjectFilter.setToolTipText("Encrypt messages with these subjects");
-		subjectFilter.addListener(SWT.Selection, new Listener() {
+		subjectFilter.addActionListener(new ActionListener() {
 			@Override
-			public void handleEvent( Event event ) {
+			public void actionPerformed(ActionEvent arg0) {
 				openPopup(KeyConstants.SUBJECTS, subjectSet);
 			}
 		});
+		
+		add(senderFilter);
+		add(subjectFilter);
 	}
 	
 	/**
@@ -109,18 +87,11 @@ public class FilterGroup {
 	 */
 	private void openPopup(String type, Set<String> set) {
 		/* create the popup */
-		FilterPopup fp = new FilterPopup(type, display);
+		FilterPopup fp = new FilterPopup(set);
 		/* push the current filters into the popup */
 		fp.loadFilters(set);
 		/* run the popup */
-		fp.open();
-		/* reset our stored filters */
-		set.clear();
-		/* pull the new filters out of the popup */
-		set.addAll(fp.getFilters());
-		/* get the inversion */
-		if( fp.getInvert() )
-			invertFilter.add(type);
+		fp.setVisible(true);
 	}
 	
 	/**

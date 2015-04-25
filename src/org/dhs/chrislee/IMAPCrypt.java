@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -13,11 +14,15 @@ import java.util.TreeSet;
 import javax.mail.Folder;
 import javax.mail.Message;
 import javax.mail.MessagingException;
+import javax.mail.NoSuchProviderException;
 import javax.mail.Session;
 import javax.mail.Store;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.Flags;
+
+import org.apache.log4j.Logger;
+
 import de.buelowssiege.mail.pgp_mime.BodyPartEncrypter;
 import de.buelowssiege.mail.pgp_mime.gpg.GnuPGBodyPartEncrypter;
 import de.buelowssiege.mail.pgp_mime.MimeMultipartEncrypted;
@@ -30,7 +35,7 @@ import joptsimple.OptionSet;
  * @author chrislee and jschwier
  */
 public class IMAPCrypt {
-	private static int VERBOSE_SUBJECT_LENGTH = 50;
+	//private static int VERBOSE_SUBJECT_LENGTH = 50;
 	private String gpgpath; // the full path to the GPG binary executable
 	private String server;  // the hostname or IP of the IMAP server
 	private String username; // the username for the IMAP server
@@ -38,8 +43,9 @@ public class IMAPCrypt {
 	private String folder;  // the folder to evaluate for encryption
 	private HashSet<String> recipients; // the list of keys/email addresses to encrypt the messages to
 	// a list of message evaluation callbacks to check each message to see if it should be encrypted
-	private TreeSet<MessageEvaluationCallback> messageEvaluationCallbacks; 
+	private ArrayList<MessageEvaluationCallback> messageEvaluationCallbacks; 
 	private boolean verbose; // print debug/connection messages?
+	final static Logger logger = Logger.getLogger(IMAPCrypt.class);
 	
 	/**
 	 * Instantiates the IMAPCrypt object.
@@ -55,7 +61,7 @@ public class IMAPCrypt {
 		this.username = username; // set the username
 		this.folder = null; // initialize the folder to be null
 		this.recipients = new HashSet<String>(); // create an empty list for the recipients
-		this.messageEvaluationCallbacks = new TreeSet<MessageEvaluationCallback>(); // create an empty list for the callbacks
+		this.messageEvaluationCallbacks = new ArrayList<MessageEvaluationCallback>(); // create an empty list for the callbacks
 		this.verbose = false; // set the verbose flag to false to hide connection details
 	}
 
@@ -180,7 +186,7 @@ public class IMAPCrypt {
 	 * 
 	 * @return TreeSet<MessageEvaluationCallback>
 	 */
-	public TreeSet<MessageEvaluationCallback> getMessageEvaluationCallbacks() {
+	public ArrayList<MessageEvaluationCallback> getMessageEvaluationCallbacks() {
 		return this.messageEvaluationCallbacks;
 	}
 	
@@ -222,24 +228,29 @@ public class IMAPCrypt {
 	 * Enumerate and return the IMAP folders for the configured account
 	 * 
 	 * @return TreeSet<String>
+	 * @throws MessagingException 
 	 */
-	public TreeSet<String> getFolders() {
+	public TreeSet<String> getFolders() throws MessagingException {
 		Properties props = System.getProperties();
 		props.setProperty("mail.store.protocol", "imaps");
 		try {
+			logger.debug("Creating IMAP session");
 			// Create an IMAP session
 		    Session session = Session.getDefaultInstance(props, null);
 			Store store = session.getStore("imaps");
 			// Connect to the IMAP server using a username and password
+			logger.info("Connecting to IMAP server: "+username+"@"+server);
 			store.connect(this.server, this.username, this.password);
 			TreeSet<String> folders = new TreeSet<String>();
 			Folder root = store.getDefaultFolder();
 			folders.add(root.getFullName());
 			for(Folder folder:root.list()) {
+				logger.debug("Retrieved folder name "+folder);
 				folders.addAll(getChildFolders(folder));
 			}
 			return folders;
-		} catch (Exception e) {
+		} catch (NoSuchProviderException e) {
+			logger.error("NoSuchProviderException raised when retrieving folders\n"+e);
 			e.printStackTrace();
 		}
 		return null;
@@ -252,6 +263,7 @@ public class IMAPCrypt {
 	 * @throws Exception the exception
 	 */
 	public int encrypt() throws Exception {
+		
 		if(this.folder == null)
 			throw new Exception("folder must be set");
 		
@@ -266,48 +278,34 @@ public class IMAPCrypt {
 		props.setProperty("mail.store.protocol", "imaps");
 		
 		int encryptedCount = 0;
+		logger.debug("Setting up encryptor for the following recipients: "+recipients);
 		// use the jpgpmime encrypter class to set up an encrypter to the list of recipients
 		BodyPartEncrypter encrypter = new GnuPGBodyPartEncrypter(this.gpgpath, this.recipients.toArray(new String[0]));
 
-		if(verbose)
-			System.out.println("Connecting to "+this.username+"@"+this.server);
+		logger.info("Connecting to "+this.username+"@"+this.server);
 		// Create an IMAP session
 	    Session session = Session.getDefaultInstance(props, null);
 		Store store = session.getStore("imaps");
 		// Connect to the IMAP server using a username and password
 		store.connect(this.server, this.username, this.password);
 
-		if(verbose)
-			System.out.println("Selecting folder "+this.folder);
+		logger.info("Selecting folder "+this.folder);
 		// Select the target folder
 		Folder inbox = store.getFolder(this.folder);
 		// Open the target folder for reading and writing
 		inbox.open(Folder.READ_WRITE);
-		if(verbose)
-			System.out.println("Fetching messages");
+		logger.info("Fetching messages");
 		// Get all the messages
 		Message messages[] = inbox.getMessages();
-		if(verbose)
-			System.out.println("Fetched "+messages.length+" messages");
+		logger.info("Fetched "+messages.length+" messages");
 		// Iterate through each message
 		for(Message message:messages) {
 			// Grab the content type
 			String contentType = message.getContentType();
-			if(verbose) {
-				System.out.print("#"+message.getMessageNumber()+" ("+message.getSentDate()+") ");
-				if(message.getSubject().length() > VERBOSE_SUBJECT_LENGTH) {
-					System.out.print(message.getSubject().substring(0,VERBOSE_SUBJECT_LENGTH-3)+"...");
-				} else {
-					System.out.print(message.getSubject());
-					for(int i=VERBOSE_SUBJECT_LENGTH; i > message.getSubject().length(); i--) {
-						System.out.print(" ");
-					}
-				}
-			}
+			logger.info("Message #"+message.getMessageNumber()+" on "+message.getSentDate()+": "+message.getSubject());
 			// Check if the email is already encrypted
 			if(contentType != null && (contentType.contains("application/pgp-encrypted") || contentType.contains("application/pkcs7-mime"))) {
-				if(verbose)
-					System.out.println(" [Skipping encrypted message]");
+				logger.info("  Skipping already encrypted message");
 				continue;
 			}
 			boolean encryptable = true;
@@ -316,8 +314,7 @@ public class IMAPCrypt {
 				for(MessageEvaluationCallback mec:this.messageEvaluationCallbacks) {
 					if(!mec.isEncryptableMessage(message)) {
 						encryptable = false;
-						if(verbose)
-							System.out.println(" [Did not match any filter]");
+						logger.info("  Did not match all the filters");
 						break;
 					}
 				}
@@ -330,6 +327,7 @@ public class IMAPCrypt {
 			mbp.setContent(message.getContent(), contentType);
 			
 			try {
+				logger.debug("Encrypting the MultiPartMime message");
 			    // encrypt the message
 				MimeMultipartEncrypted mme = MimeMultipartEncrypted.createInstance(mbp, encrypter);
 				// Create a brand new MimeMessage with the contents of the original message
@@ -341,21 +339,32 @@ public class IMAPCrypt {
 			    mimeMessage.saveChanges();
 			    // create an array (of one) of messages to insert
 			    Message newMessages[] = { mimeMessage };
+			    logger.info("Appending the new, encrypted version of the message into the folder, "+folder);
 			    // insert the message into the folder
 			    inbox.appendMessages(newMessages);
+			    logger.info("Setting the delete flag on the old, unencrypted version of the message");
 			    // set the DELETE flag on the original email
 			    message.setFlag(Flags.Flag.DELETED, true);
 			    // delete all emails with the DELETE flag set (including ones that this tool hasn't touched)
-			    inbox.expunge();
+			    //inbox.expunge();
 			    encryptedCount += 1;
-				if(verbose)
-					System.out.println(" [Encrypted]");
 			} catch (javax.mail.IllegalWriteException e) {
-				if(verbose)
-					System.out.println(" [Failed to encrypt]");
+				logger.error("The message failed to encrypt because of a IllegalWriteException: "+e);
 			}
 		}
+		logger.info("Finished encrypting folder, closing down (and expunging deleted emails)");
+		inbox.close(true);
+		store.close();
+		logger.info("Encrypted a total of "+encryptedCount+" messages");
 		return encryptedCount;
+	}
+	
+	public Logger getLogger() {
+		return logger;
+	}
+	
+	public static Logger getLoggerInstance() {
+		return logger;
 	}
 	
 	/**
@@ -442,8 +451,7 @@ public class IMAPCrypt {
 			// all the different ways that people could manage their keys, so, the tool has to have it specified
 			String recipients[] = null;
 			if(options.has("r")) {
-				List<?> vals = options.valuesOf("r");
-				recipients = vals.toArray(new String [0]);
+				recipients = ((String)options.valueOf("r")).split(",");
 			}
 			if(recipients == null || recipients.length == 0) {
 				System.out.println("Please specify the email addresses or KeyIDs for encryption, separated by commas:");
@@ -523,7 +531,11 @@ public class IMAPCrypt {
 			} else {
 				System.out.println("Please specify the number of days old an email has to be before it's encrypted:");
 				BufferedReader bir = new BufferedReader(new InputStreamReader(System.in));
-				daysago = Integer.parseInt(bir.readLine().trim());
+				try {
+					daysago = Integer.parseInt(bir.readLine().trim());
+				} catch (NumberFormatException e) {
+					
+				}
 			}
 
 			// if -D, set the number of days old an email must be to be considered for encryption
@@ -533,17 +545,12 @@ public class IMAPCrypt {
 			} else {
 				System.out.println("Please specify the number of days old an email has to be before it's not considered for encryption:");
 				BufferedReader bir = new BufferedReader(new InputStreamReader(System.in));
-				daysuntil = Integer.parseInt(bir.readLine().trim());
+				try {
+					daysuntil = Integer.parseInt(bir.readLine().trim());
+				} catch (NumberFormatException e) {
+					
+				}
 			}
-
-			String recipientsStr = "";
-			for(int i=0; i<recipients.length; i++) {
-				recipientsStr += recipients[i];
-				if(i < recipients.length - 1)
-					recipientsStr += " -r ";
-			}
-	
-			//System.out.println("Flags for automation: -g "+gpgloc+" -s "+server+" -u "+username+" -p "+password+" -f "+folder+" -r "+recipientsStr+" -d "+daysago+" -D "+daysuntil);
 			
 			IMAPCrypt ic = new IMAPCrypt(server, username, password);
 			ic.setGPGPath(gpgloc);
