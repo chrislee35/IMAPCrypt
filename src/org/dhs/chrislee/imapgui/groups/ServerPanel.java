@@ -20,6 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import org.dhs.chrislee.IMAPCrypt;
 import org.dhs.chrislee.imapgui.IMAPGui;
@@ -116,39 +117,13 @@ public class ServerPanel extends JPanel {
 		connect.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				Map<String, String> values = getGroupValues();
-				boolean passFile = Boolean.parseBoolean(values.get("usePassFile"));
-				String password;
-				if( passFile )
-					password = values.get("passwordFile");
-				else
-					password = values.get("password");
-				
-				IMAPCrypt crypt = new IMAPCrypt(values.get("serverIP"),
-						values.get("username"), password);
-				crypt.getLogger().addAppender(IMAPGui.getAppInstance());
-				IMAPGui.getAppInstance().getLogBrokerMonitor().show();
-				TreeSet<String> folders;
-				try {
-					folders = crypt.getFolders();
-					if( folders != null ) {
-						linkToFolderComposite.setFolders(folders);
+				Runnable r = new Runnable() {
+					public void run() {
+						getFolders();
 					}
-				} catch (javax.mail.AuthenticationFailedException e) {
-					JFrame jf = new JFrame();
-					JOptionPane.showMessageDialog(jf, "Authentication failed.  Please check your username and password.\n(Then make sure that you are really you.)");
-				} catch (MessagingException e) {
-					JFrame jf = new JFrame();
-					int returnValue = JOptionPane.showConfirmDialog(jf, "Cannot confirm the validity of the server's certificate. \nWould you like to connect anyway?");
-					if(returnValue == JOptionPane.OK_OPTION) {
-						
-					} else {
-						
-					}
-					e.printStackTrace();
-				}
+				};
+				new Thread(r).start();
 			}
-			
 		});
 
 
@@ -179,6 +154,42 @@ public class ServerPanel extends JPanel {
 		add(connect, c);
 	}
 	
+	
+	public void getFolders() {
+		Map<String, String> values = getGroupValues();
+		boolean passFile = Boolean.parseBoolean(values.get("usePassFile"));
+		String password;
+		if( passFile )
+			password = values.get("passwordFile");
+		else
+			password = values.get("password");
+		IMAPCrypt crypt = new IMAPCrypt(values.get("serverIP"),
+				values.get("username"), password);
+		crypt.getLogger().addAppender(IMAPGui.getAppInstance());
+		IMAPGui.getAppInstance().getLogBrokerMonitor().show();
+		TreeSet<String> folders;
+		try {
+			folders = crypt.getFolders();
+			if( folders != null ) {
+				linkToFolderComposite.setFolders(folders);
+			}
+		} catch (javax.mail.AuthenticationFailedException e) {
+			JFrame jf = new JFrame();
+			JOptionPane.showMessageDialog(jf, "Authentication failed.  Please check your username and password.\n(Then make sure that you are really you.)");
+			crypt.getLogger().error("Authentication failed.  Please check your username and password.\n(Then make sure that you are really you.)");
+		} catch (MessagingException e) {
+			/*JFrame jf = new JFrame();
+			int returnValue = JOptionPane.showConfirmDialog(jf, "Cannot confirm the validity of the server's certificate. \nWould you like to connect anyway?");
+			if(returnValue == JOptionPane.OK_OPTION) {
+				
+			} else {
+				
+			}
+			*/
+			crypt.getLogger().error("Cannot confirm the validity of the server's certificate: "+e);
+			e.printStackTrace();
+		}
+	}
 	/**
 	 * This sets the value of the FolderComposite in order for the ServerGroup
 	 * to populate the list of folders when the connect button is hit. This
