@@ -5,11 +5,13 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
 
 import javax.mail.MessagingException;
+import javax.net.ssl.SSLSocketFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -20,9 +22,9 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 
 import org.dhs.chrislee.IMAPCrypt;
+import org.dhs.chrislee.SSLCertificateHelper;
 import org.dhs.chrislee.imapgui.IMAPGui;
 
 public class ServerPanel extends JPanel {
@@ -178,16 +180,24 @@ public class ServerPanel extends JPanel {
 			JOptionPane.showMessageDialog(jf, "Authentication failed.  Please check your username and password.\n(Then make sure that you are really you.)");
 			crypt.getLogger().error("Authentication failed.  Please check your username and password.\n(Then make sure that you are really you.)");
 		} catch (MessagingException e) {
-			/*JFrame jf = new JFrame();
-			int returnValue = JOptionPane.showConfirmDialog(jf, "Cannot confirm the validity of the server's certificate. \nWould you like to connect anyway?");
-			if(returnValue == JOptionPane.OK_OPTION) {
-				
-			} else {
-				
-			}
-			*/
-			crypt.getLogger().error("Cannot confirm the validity of the server's certificate: "+e);
-			e.printStackTrace();
+        	if(e.getMessage().contains("PKIX path building failed")) {
+        		System.out.println("Unable to validate the certificate path.");
+        		X509Certificate cert = SSLCertificateHelper.getCertificate(values.get("serverIP"), 993);
+        		if(cert == null) {
+        			JOptionPane.showMessageDialog(this, "Cannot fetch certificate from server");
+        		} else {
+        			int retval = JOptionPane.showConfirmDialog(this, "Certificate untrusted.  Connect anyway?\n"+
+        				SSLCertificateHelper.certificateSummary(cert), 
+        				"Connect to untrusted site", 
+        				JOptionPane.OK_CANCEL_OPTION);
+        			if(retval == JOptionPane.OK_OPTION) {
+        				SSLCertificateHelper.addCertToKeyStore(cert);
+        				SSLSocketFactory sslsf = SSLCertificateHelper.getSSLSocketFactory();
+        				IMAPCrypt.setSSLSocketFactory(sslsf);
+        				getFolders();
+        			}
+        		}
+        	}
 		}
 	}
 	/**

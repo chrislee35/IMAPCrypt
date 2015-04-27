@@ -20,6 +20,7 @@ import javax.mail.Store;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.Flags;
+import javax.net.ssl.SSLSocketFactory;
 
 import org.apache.log4j.Logger;
 
@@ -45,6 +46,7 @@ public class IMAPCrypt {
 	// a list of message evaluation callbacks to check each message to see if it should be encrypted
 	private ArrayList<MessageEvaluationCallback> messageEvaluationCallbacks; 
 	private boolean verbose; // print debug/connection messages?
+	private static SSLSocketFactory sslSocketFactory = null;
 	final static Logger logger = Logger.getLogger(IMAPCrypt.class);
 	
 	/**
@@ -208,6 +210,10 @@ public class IMAPCrypt {
 		this.verbose = verbose;
 	}
 	
+	
+	public static void setSSLSocketFactory(SSLSocketFactory factory) {
+		sslSocketFactory = factory;
+	}
 	/**
 	 * Recursive function to walk down the IMAP folders and build a list (with order) of the IMAP folders
 	 * 
@@ -233,6 +239,8 @@ public class IMAPCrypt {
 	public TreeSet<String> getFolders() throws MessagingException {
 		Properties props = System.getProperties();
 		props.setProperty("mail.store.protocol", "imaps");
+		if(sslSocketFactory != null)
+			props.put("mail.imaps.socketFactory", sslSocketFactory);
 		try {
 			logger.debug("Creating IMAP session");
 			// Create an IMAP session
@@ -276,6 +284,8 @@ public class IMAPCrypt {
 		// create a properties store to pass to the IMAP session
 		Properties props = System.getProperties();
 		props.setProperty("mail.store.protocol", "imaps");
+		if(sslSocketFactory != null)
+			props.put("mail.imaps.socketFactory", sslSocketFactory);
 		
 		int encryptedCount = 0;
 		logger.debug("Setting up encryptor for the following recipients: "+recipients);
