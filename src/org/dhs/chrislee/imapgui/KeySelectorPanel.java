@@ -30,6 +30,7 @@ public class KeySelectorPanel extends JDialog {
 	GPGKeyList secretKeyList;
 	GPGKeyList publicKeyList;
 	GPGKeyList selectedKeyIds;
+	private KeySelectorTableModel dtm;
 	
 	public KeySelectorPanel() {
 		this(
@@ -62,7 +63,7 @@ public class KeySelectorPanel extends JDialog {
 			addGPGKeyIDToModel(kid, data);
 		Object[][] d = new Object[1][];
 		d = data.toArray(d);
-		KeySelectorTableModel dtm = new KeySelectorTableModel(d, columnNames);
+		dtm = new KeySelectorTableModel(d, columnNames);
 		
 		JTable table = new JTable(dtm){
 
@@ -151,7 +152,7 @@ public class KeySelectorPanel extends JDialog {
 		pack();
 		setSize(uidColumnWidth+220, 600);
 	}
-	
+		
 	protected void addGPGKeyIDToModel(GPGKeyId kid, ArrayList<Object[]> data) {
 		Object[] row = new Object[4];
 		row[0] = new Boolean(kid.isSecret());

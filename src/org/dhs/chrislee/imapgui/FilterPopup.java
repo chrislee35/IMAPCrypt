@@ -117,6 +117,9 @@ public class FilterPopup extends JDialog {
 		okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed( ActionEvent e ) {
+				JButton b1 = (JButton)e.getSource();
+				FilterPopup fd1 = (FilterPopup)b1.getParent();
+				Set<String> filters = fd1.getFilters();
 				filters.clear();
 				/* save the filters to the set */
 				Enumeration<String> en = model.elements();

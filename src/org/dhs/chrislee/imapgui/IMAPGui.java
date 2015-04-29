@@ -285,8 +285,9 @@ public class IMAPGui extends JFrame {
 			}
 			
 			crypt.setVerbose(true);
-			//crypt.getLogger().addAppender(app);
-			Runnable r = new Runnable() {
+			class EncryptRunnable implements Runnable {
+				IMAPCrypt crypt;
+				EncryptRunnable(IMAPCrypt c) { crypt = c; }
 				public void run() {
 					try {
 						crypt.encrypt();
@@ -295,7 +296,7 @@ public class IMAPGui extends JFrame {
 					}
 				}
 			};
-			new Thread(r).start();
+			new Thread(new EncryptRunnable(crypt)).start();
 		} catch( Exception e ) {
 			crypt.getLogger().error("Exception thrown: "+e);
 		}
