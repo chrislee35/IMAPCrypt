@@ -12,6 +12,8 @@ public class KeySelectorTableModel extends DefaultTableModel {
 		super(data, columnNames);
 	}
 	public Class<?> getColumnClass(int columnIndex) {
+		if(getValueAt(0, columnIndex) == null)
+			return String.class;
         return getValueAt(0, columnIndex).getClass();
     }
 	@Override

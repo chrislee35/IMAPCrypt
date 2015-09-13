@@ -47,6 +47,7 @@ public class IMAPCrypt {
 	private ArrayList<MessageEvaluationCallback> messageEvaluationCallbacks; 
 	private boolean verbose; // print debug/connection messages?
 	private static SSLSocketFactory sslSocketFactory = null;
+	final public static String VERSION = "2.0.3";
 	final static Logger logger = Logger.getLogger(IMAPCrypt.class);
 	
 	/**

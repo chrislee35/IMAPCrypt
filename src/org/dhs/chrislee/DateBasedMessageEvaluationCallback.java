@@ -57,6 +57,16 @@ public class DateBasedMessageEvaluationCallback implements
 	 */
 	public boolean isEncryptableMessage(Message m) throws MessagingException {
 		java.util.Date today = new java.util.Date();
+		// What should I do if m.getSentDate() is null?
+		// (a) set it to the epoch
+		// (b) set it to current time
+		// (c) set it to some offset of current time
+		// (d) set it to OCT 21 2015 04:29
+		// (e) return false
+		// (f) return true ** I'm going with this
+		if(m.getSentDate() == null)
+			return (! this.invert);
+
 		int daysold = (int)((today.getTime() - m.getSentDate().getTime())/(1000*24*60*60));
 		if(this.invert) {
 			return ! (daysold >= this.minage && daysold <= this.maxage);

@@ -64,6 +64,8 @@ public class IMAPGui extends JFrame {
 	 */
 	public IMAPGui() {
 		super();
+		
+		this.setTitle("IMAPCrypt version "+IMAPCrypt.VERSION);
 
 		/* create the groups, add them to the GUI,
 		 * create Panels

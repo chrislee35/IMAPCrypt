@@ -17,7 +17,7 @@ public class GPGKeyList {
 	}
 	
 	protected static GPGKeyId[] arrayListToArray(ArrayList<GPGKeyId> ids) {
-		GPGKeyId[] arr = new GPGKeyId[1];
+		GPGKeyId[] arr = new GPGKeyId[ids.size()];
 		return ids.toArray(arr);
 		
 	}

@@ -49,16 +49,16 @@ public class KeySelectorPanel extends JDialog {
 		secretKeyList = sec;
 		publicKeyList = pub;
 		selectedKeyIds = new GPGKeyList();
-		for(GPGKeyId kid : secretKeyList.getKeyIDArray())
-			selectedKeyIds.addKeyId(kid);
+		if(secretKeyList != null)
+			for(GPGKeyId kid : secretKeyList.getKeyIDArray())
+				selectedKeyIds.addKeyId(kid);
 		int uidColumnWidth = 500;
 		
 		String[] columnNames = {"Use?", "KeyId", "UID", "KID"};
 		ArrayList<Object[]> data = new ArrayList<Object[]>();
-		for(GPGKeyId kid : sec.getKeyIDArray()) {
-			addGPGKeyIDToModel(kid, data);
-			
-		}
+		if(secretKeyList != null)
+			for(GPGKeyId kid : sec.getKeyIDArray())
+				addGPGKeyIDToModel(kid, data);
 		for(GPGKeyId kid : pub.getKeyIDArray())
 			addGPGKeyIDToModel(kid, data);
 		Object[][] d = new Object[1][];
