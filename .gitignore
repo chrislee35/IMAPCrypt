@@ -3,3 +3,4 @@ bin
 packaged
 packaging
 .svn
+.DS_Store

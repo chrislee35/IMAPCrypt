@@ -49,6 +49,8 @@ public class GPGUtil {
 			while((line = br.readLine()) != null) {
 				if(line.startsWith(secpub)) {
 					keyId = new GPGKeyId(line);
+					if(keyId.keyId == null)
+						keyId.setKeyId(br.readLine().trim());
 				} else if(line.startsWith("uid")) {
 					if(line.contains("@")) {
 						if(line.contains("[ expired]") || line.contains("[ revoked]")) {

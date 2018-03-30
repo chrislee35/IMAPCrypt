@@ -35,22 +35,33 @@ public class GPGKeyId {
 			keyType = KEYTYPE_PUBLIC;
 		else
 			throw new IllegalArgumentException("Could not parse the key type from line.");
-		String[] keyAlgoId = parts[1].split("/");
-		keyId = keyAlgoId[1];
-		keyBits = Integer.parseInt(keyAlgoId[0].substring(0, keyAlgoId[0].length()-1));
-		if(keyAlgoId[0].endsWith("R"))
-			keyAlgo = GPGKeyId.KEYALGO_RSA;
-		else if(keyAlgoId[0].endsWith("D"))
-			keyAlgo = GPGKeyId.KEYALGO_DSA;
-		else
-			throw new IllegalArgumentException("Could not parse the key algorithm from line.");
+		if(parts[1].contains("/")) {
+			String[] keyAlgoId = parts[1].split("/");
+			keyId = keyAlgoId[1];
+			keyBits = Integer.parseInt(keyAlgoId[0].substring(0, keyAlgoId[0].length()-1));
+			if(keyAlgoId[0].endsWith("R"))
+				keyAlgo = GPGKeyId.KEYALGO_RSA;
+			else if(keyAlgoId[0].endsWith("D"))
+				keyAlgo = GPGKeyId.KEYALGO_DSA;
+			else
+				throw new IllegalArgumentException("Could not parse the key algorithm from line.");
+		} else { // For MacGPG
+			if(parts[1].contains("rsa"))
+				keyAlgo = GPGKeyId.KEYALGO_RSA;
+			else if(parts[1].contains("dsa"))
+				keyAlgo = GPGKeyId.KEYALGO_DSA;
+			else
+				throw new IllegalArgumentException("Could not parse the key algorithm from line.");
+			keyBits = Integer.parseInt(parts[1].substring(3, parts[1].length()));
+			keyId = null;
+		}
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
 		try {
 			expiration = df.parse(parts[2]);
 		} catch (ParseException e) {
 			throw new IllegalArgumentException("Could not parse date: "+parts[2]);
 		}
-
+		// keyId is on the next line 
 		this.uids = new ArrayList<String>();
 	}
 
@@ -128,11 +139,12 @@ public class GPGKeyId {
 	}
 	
 	public void setKeyId(String keyId) {
-		if(keyId == null || keyId.length() != 8)
-			throw new IllegalArgumentException("Key IDs should not be null and be exactly 8 characters long.");
-		if(keyId.toUpperCase().matches("[0-9A-F]{8}"))
+		if(keyId == null || (keyId.length() != 8 && keyId.length() != 40))
+			throw new IllegalArgumentException("Key IDs should not be null and be exactly 8 or 40 characters long.");
+		if(keyId.toUpperCase().matches("[0-9A-F]{8}") || keyId.toUpperCase().matches("[0-9A-F]{40}"))
 			this.keyId = keyId.toUpperCase();
-		throw new IllegalArgumentException("The key ID must be an 8-character hex string.");
+		else
+			throw new IllegalArgumentException("The key ID must be an 8 or 40-character hex string.");
 	}
 	
 	public ArrayList<String> getUids() {
