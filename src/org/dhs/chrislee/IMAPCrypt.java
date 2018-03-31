@@ -335,6 +335,7 @@ public class IMAPCrypt {
 						
 			// Create a MimeBodyPart from the original email (attachments and all)
 			MimeBodyPart mbp = new MimeBodyPart();
+			logger.debug(contentType);
 			mbp.setContent(message.getContent(), contentType);
 			
 			try {

@@ -135,7 +135,7 @@ public class GPGKeyId {
 	}
 	
 	public String getKeyId() {
-		return keyId;
+		return keyId.substring(keyId.length() - 8, 8);
 	}
 	
 	public void setKeyId(String keyId) {

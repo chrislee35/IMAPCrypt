@@ -294,6 +294,7 @@ public class IMAPGui extends JFrame {
 					try {
 						crypt.encrypt();
 					} catch (Exception e) {
+						e.printStackTrace();
 						crypt.getLogger().error("Exception thrown: "+e);
 					}
 				}
