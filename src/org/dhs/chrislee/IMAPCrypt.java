@@ -3,7 +3,9 @@ package org.dhs.chrislee;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -21,6 +23,7 @@ import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.Flags;
 import javax.net.ssl.SSLSocketFactory;
+import javax.swing.JOptionPane;
 
 import org.apache.log4j.Logger;
 
@@ -46,6 +49,7 @@ public class IMAPCrypt {
 	// a list of message evaluation callbacks to check each message to see if it should be encrypted
 	private ArrayList<MessageEvaluationCallback> messageEvaluationCallbacks; 
 	private boolean verbose; // print debug/connection messages?
+	private boolean insecureConnection = false;
 	private static SSLSocketFactory sslSocketFactory = null;
 	final public static String VERSION = "2.0.3";
 	final static Logger logger = Logger.getLogger(IMAPCrypt.class);
@@ -212,6 +216,14 @@ public class IMAPCrypt {
 	}
 	
 	
+	public boolean isInsecureConnection() {
+		return insecureConnection;
+	}
+
+	public void setInsecureConnection(boolean insecureConnection) {
+		this.insecureConnection = insecureConnection;
+	}
+
 	public static void setSSLSocketFactory(SSLSocketFactory factory) {
 		sslSocketFactory = factory;
 	}
@@ -298,7 +310,24 @@ public class IMAPCrypt {
 	    Session session = Session.getDefaultInstance(props, null);
 		Store store = session.getStore("imaps");
 		// Connect to the IMAP server using a username and password
-		store.connect(this.server, this.username, this.password);
+		try {
+			store.connect(this.server, this.username, this.password);
+		} catch(MessagingException me) {
+			if(me.getMessage().contains("PKIX path building failed")) {
+        		System.out.println("Unable to validate the certificate path.");
+        		X509Certificate cert = SSLCertificateHelper.getCertificate(this.server, 993);
+        		if(cert == null) {
+        			System.out.println("Cannot fetch certificate from server");
+        		} else {
+        			System.out.println(SSLCertificateHelper.certificateSummary(cert));
+    				SSLCertificateHelper.addCertToKeyStore(cert);
+    				SSLSocketFactory sslsf = SSLCertificateHelper.getSSLSocketFactory();
+    				IMAPCrypt.setSSLSocketFactory(sslsf);
+    				store.connect(this.server, this.username, this.password);
+    				getFolders();
+        		}
+        	}
+		}
 
 		logger.info("Selecting folder "+this.folder);
 		// Select the target folder
@@ -332,7 +361,16 @@ public class IMAPCrypt {
 			}
 			if(!encryptable)
 				continue;
-						
+			
+			InputStream is = message.getInputStream();
+			System.out.println("** Printing message");
+			byte[] b = new byte[1024];
+			while(is.read(b) > 0)
+				System.out.print(b);
+			is.close();
+			System.out.println("");
+			System.out.println("** End of Message");
+			
 			// Create a MimeBodyPart from the original email (attachments and all)
 			MimeBodyPart mbp = new MimeBodyPart();
 			logger.debug(contentType);
@@ -410,7 +448,9 @@ public class IMAPCrypt {
 		System.out.println("-u <username>      username to login to IMAP server");
 		System.out.println("-p <password>      password to login to IMAP server");
 		System.out.println("-P <passwordfile>  filename containing the password to login to the IMAP server");
+		System.out.println("-k                 ignore server certificate validation errors (insecure)");
 		System.out.println("-f <folder>        folder to encrypt, e.g. Inbox.hatemail.2009");
+		System.out.println("-r <recipient>     who to encrypt to");
 		System.out.println("-d <daysago>       encrypt only emails that are older than X days old, 0=everything, 1=yesterday and beyond, default is 0");
 		System.out.println("-D <daysutil>      encrypt only emails that are younger than X days old, 0=nothing, 1=today's only, default is MAXINT");
 		System.out.println("-F <from>          encrypt only emails that are from a given list of senders");
@@ -425,7 +465,7 @@ public class IMAPCrypt {
 	 */
 	public static void main(String args[]) {
 		// Set up the arguments parser and then parse the args[] structure
-		OptionParser parser = new OptionParser("hvg:s:u:p:P:f:r:d:D:F:S:");
+		OptionParser parser = new OptionParser("hkvg:s:u:p:P:f:r:d:D:F:S:");
 		OptionSet options = parser.parse(args);
 		
 		try {
@@ -588,6 +628,8 @@ public class IMAPCrypt {
 			ic.addMessageEvaluationCallback(dbmec);
 			if(options.has("v"))
 				ic.setVerbose(true);
+			if(options.has("k"))
+				ic.setInsecureConnection(true);
 			ic.encrypt();
 		} catch (Exception e) {
 			e.printStackTrace();
